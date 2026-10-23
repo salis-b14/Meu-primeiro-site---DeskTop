@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#087e78">
+  <title>PixelOS 98</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/main.js" defer></script>
+</head>
+<body>
+  <main class="desktop" data-wallpaper="teal" aria-label="Área de trabalho do PixelOS 98">
+    <section class="desktop-icons" aria-label="Atalhos da área de trabalho">
+      <button class="desktop-icon" type="button" aria-label="Meu Computador" data-app="my-computer">
+        <svg class="icon-art computer-art" viewBox="0 0 40 40" aria-hidden="true" shape-rendering="crispEdges">
+          <path fill="#17172d" d="M5 5h30v22H5z"/>
+          <path fill="#fff" d="M7 7h26v18H7z"/>
+          <path fill="#253f94" d="M8 8h24v16H8z"/>
+          <path fill="#68d7e8" d="M10 10h8v2h-8zm0 4h4v2h-4z"/>
+          <path fill="#c8c8c8" d="M17 27h6v5h5v3H12v-3h5z"/>
+          <path fill="#fff" d="M7 5h28v2H7zM5 5h2v22H5z"/>
+        </svg>
+        <span>Meu Computador</span>
+      </button>
+      <button class="desktop-icon" type="button" aria-label="Bloco de Notas" data-app="notepad">
+        <svg class="icon-art" viewBox="0 0 40 40" aria-hidden="true" shape-rendering="crispEdges">
+          <path fill="#17172d" d="M9 4h22v32H9z"/>
+          <path fill="#f5f0d7" d="M11 6h18v28H11z"/>
+          <path fill="#7851a9" d="M12 6h16v4H12z"/>
+          <path fill="#55a8cb" d="M14 14h12v2H14zm0 5h12v2H14zm0 5h9v2h-9z"/>
+          <path fill="#e28a68" d="M7 11h4v2H7zm0 5h4v2H7zm0 5h4v2H7zm0 5h4v2H7z"/>
+        </svg>
+        <span>Bloco de Notas</span>
+      </button>
+      <button class="desktop-icon" type="button" aria-label="Arquivos" data-app="files">
+        <svg class="icon-art" viewBox="0 0 40 40" aria-hidden="true" shape-rendering="crispEdges">
+          <path fill="#17172d" d="M4 10h14l3 4h15v21H4z"/>
+          <path fill="#f7c94a" d="M6 16h28v17H6z"/>
+          <path fill="#ffdf72" d="M6 16h28v3H6z"/>
+          <path fill="#fff0ad" d="M9 21h17v2H9zm0 5h12v2H9z"/>
+          <path fill="#fff" d="M4 10h14v2H6v3H4z"/>
+        </svg>
+        <span>Arquivos</span>
+      </button>
+      <button class="desktop-icon" type="button" aria-label="Configurações" data-app="settings">
+        <svg class="icon-art" viewBox="0 0 40 40" aria-hidden="true" shape-rendering="crispEdges">
+          <path fill="#17172d" d="M16 4h8v5l4 2 4-2 4 7-4 3v4l4 3-4 7-5-2-3 2v5h-8v-5l-4-2-4 2-4-7 4-3v-4l-4-3 4-7 5 2 3-2z"/>
+          <path fill="#b9b9c3" d="M17 6h6v5l5 3 4-2 2 4-4 3v6l4 3-2 4-5-2-4 3v5h-6v-5l-5-3-4 2-2-4 4-3v-6l-4-3 2-4 5 2 4-3z"/>
+          <path fill="#7851a9" d="M15 20h10v4H15z"/>
+          <path fill="#e6e3ee" d="M18 16h4v12h-4z"/>
+          <path fill="#17172d" d="M17 18h6v8h-6z"/>
+          <path fill="#7bd1cf" d="M19 20h2v4h-2z"/>
+        </svg>
+        <span>Configurações</span>
+      </button>
+      <button class="desktop-icon" type="button" aria-label="Jogos" data-app="games">
+        <svg class="icon-art" viewBox="0 0 40 40" aria-hidden="true" shape-rendering="crispEdges">
+          <path fill="#17172d" d="M10 11h20l5 5 2 14-3 4h-5l-6-7h-6l-6 7H6l-3-4 2-14z"/>
+          <path fill="#ad6fe0" d="M11 13h18l4 4 2 12-2 3h-3l-6-7H16l-6 7H7l-2-3 2-12z"/>
+          <path fill="#f2e9ff" d="M9 20h8v3H9zm3-3h3v9h-3z"/>
+          <path fill="#f9d75e" d="M25 19h3v3h-3zm4 4h3v3h-3z"/>
+          <path fill="#fff" d="M8 14h8v2H8z"/>
+        </svg>
+        <span>Jogos</span>
+      </button>
+    </section>
+
+    <section class="welcome-window" aria-label="Boas-vindas">
+      <div class="window-titlebar">
+        <span class="title-mark" aria-hidden="true">P</span>
+        <span>PixelOS 98</span>
+      </div>
+      <div class="welcome-content">
+        <span class="welcome-spark" aria-hidden="true">✦</span>
+        <p>Bem-vindo ao PixelOS 98</p>
+      </div>
+    </section>
+
+    <section class="app-window" id="computer-window" aria-labelledby="computer-title" aria-hidden="true" hidden>
+      <div class="window-titlebar">
+        <span class="title-mark" aria-hidden="true">P</span>
+        <span id="computer-title">Meu Computador</span>
+        <div class="window-controls">
+          <button class="window-control minimize-control" type="button" aria-label="Minimizar Meu Computador">_</button>
+          <button class="window-control close-control" type="button" aria-label="Fechar Meu Computador">×</button>
+        </div>
+      </div>
+      <div class="computer-content">
+        <div class="computer-welcome">
+          <span class="computer-emblem" aria-hidden="true">P</span>
+          <div>
+            <h1>Bem-vindo ao PixelOS 98</h1>
+            <p>Seu computador retrô está pronto para explorar.</p>
+          </div>
+        </div>
+        <div class="computer-specs" aria-label="Informações simuladas do computador">
+          <h2>Informações do sistema</h2>
+          <dl>
+            <div><dt>Sistema</dt><dd>PixelOS 98 — versão 1.0</dd></div>
+            <div><dt>Memória</dt><dd>32 MB RAM</dd></div>
+            <div><dt>Armazenamento</dt><dd>1,44 GB</dd></div>
+          </dl>
+        </div>
+        <p class="simulation-note">Os dados de hardware são fictícios e fazem parte desta simulação.</p>
+        <div class="computer-actions">
+          <button class="classic-button" id="about-button" type="button" aria-expanded="false" aria-controls="about-panel">Sobre</button>
+        </div>
+        <section class="about-panel" id="about-panel" aria-labelledby="about-title" hidden>
+          <div class="about-heading">
+            <h2 id="about-title">Sobre o PixelOS 98</h2>
+            <button class="window-control close-control" id="about-close" type="button" aria-label="Fechar informações Sobre">×</button>
+          </div>
+          <p>PixelOS 98 é um projeto independente que recria o clima dos computadores e videogames retrô.</p>
+          <p>Versão 1.0 · Uma experiência visual feita para a web.</p>
+          <button class="classic-button about-ok" id="about-ok" type="button">OK</button>
+        </section>
+      </div>
+    </section>
+
+    <section class="app-window notepad-window" id="notepad-window" aria-labelledby="notepad-title" aria-hidden="true" hidden>
+      <div class="window-titlebar">
+        <span class="title-mark" aria-hidden="true">N</span>
+        <span id="notepad-title">Bloco de Notas</span>
+        <div class="window-controls">
+          <button class="window-control minimize-control" id="notepad-minimize" type="button" aria-label="Minimizar Bloco de Notas">_</button>
+          <button class="window-control close-control" id="notepad-close" type="button" aria-label="Fechar Bloco de Notas">×</button>
+        </div>
+      </div>
+      <div class="notepad-content">
+        <div class="notepad-toolbar" aria-label="Ações do editor">
+          <button class="classic-button" id="notepad-new" type="button">Novo</button>
+          <button class="classic-button" id="notepad-clear" type="button">Limpar</button>
+        </div>
+        <label class="visually-hidden" for="notepad-editor">Texto do Bloco de Notas</label>
+        <textarea class="notepad-editor" id="notepad-editor" spellcheck="false" placeholder="Digite seu texto aqui..."></textarea>
+        <p class="notepad-save-status" id="notepad-save-status" role="status" aria-live="polite">Pronto</p>
+      </div>
+    </section>
+
+    <section class="app-window settings-window" id="settings-window" aria-labelledby="settings-title" aria-hidden="true" hidden>
+      <div class="window-titlebar">
+        <span class="title-mark" aria-hidden="true">C</span>
+        <span id="settings-title">Configurações</span>
+        <div class="window-controls">
+          <button class="window-control minimize-control" id="settings-minimize" type="button" aria-label="Minimizar Configurações">_</button>
+          <button class="window-control close-control" id="settings-close" type="button" aria-label="Fechar Configurações">×</button>
+        </div>
+      </div>
+      <div class="settings-content">
+        <h1>Papel de parede</h1>
+        <p>Escolha o visual da sua área de trabalho:</p>
+        <div class="wallpaper-options" role="group" aria-label="Temas de papel de parede">
+          <button class="wallpaper-option" type="button" data-wallpaper-option="teal" aria-pressed="true">
+            <span class="wallpaper-preview preview-teal" aria-hidden="true"></span>
+            <span>Verde-azulado clássico</span>
+          </button>
+          <button class="wallpaper-option" type="button" data-wallpaper-option="purple" aria-pressed="false">
+            <span class="wallpaper-preview preview-purple" aria-hidden="true"></span>
+            <span>Roxo noturno</span>
+          </button>
+          <button class="wallpaper-option" type="button" data-wallpaper-option="blue" aria-pressed="false">
+            <span class="wallpaper-preview preview-blue" aria-hidden="true"></span>
+            <span>Azul retrô</span>
+          </button>
+        </div>
+        <p class="settings-save-status" id="settings-save-status" role="status" aria-live="polite">Tema padrão</p>
+      </div>
+    </section>
+
+    <section class="app-window files-window" id="files-window" aria-labelledby="files-title" aria-hidden="true" hidden>
+      <div class="window-titlebar">
+        <span class="title-mark" aria-hidden="true">A</span>
+        <span id="files-title">Arquivos</span>
+        <div class="window-controls">
+          <button class="window-control minimize-control" id="files-minimize" type="button" aria-label="Minimizar Arquivos">_</button>
+          <button class="window-control close-control" id="files-close" type="button" aria-label="Fechar Arquivos">×</button>
+        </div>
+      </div>
+      <div class="files-content">
+        <div class="files-toolbar">
+          <button class="classic-button" id="files-back" type="button" disabled>Voltar</button>
+          <p class="files-path" id="files-path" aria-live="polite">Meu Computador</p>
+        </div>
+        <p class="files-notice">Arquivos e pastas fictícios da simulação. Nada aqui acessa os arquivos reais do computador.</p>
+        <div class="files-list" id="files-list" aria-label="Conteúdo da pasta atual"></div>
+        <section class="file-preview" id="file-preview" aria-labelledby="file-preview-title" hidden>
+          <div class="file-preview-heading">
+            <h2 id="file-preview-title"></h2>
+            <button class="classic-button" id="file-preview-close" type="button">Fechar</button>
+          </div>
+          <pre id="file-preview-content"></pre>
+        </section>
+      </div>
+    </section>
+
+    <section class="app-window games-window" id="games-window" aria-labelledby="games-title" aria-hidden="true" hidden>
+      <div class="window-titlebar">
+        <span class="title-mark" aria-hidden="true">J</span>
+        <span id="games-title">Jogos</span>
+        <div class="window-controls">
+          <button class="window-control minimize-control" id="games-minimize" type="button" aria-label="Minimizar Jogos">_</button>
+          <button class="window-control close-control" id="games-close" type="button" aria-label="Fechar Jogos">×</button>
+        </div>
+      </div>
+      <div class="games-content">
+        <header class="games-heading">
+          <span class="games-pixel-star" aria-hidden="true">★</span>
+          <div>
+            <h1>Fliperama PixelOS</h1>
+            <p>Pequenos jogos, grandes desafios!</p>
+          </div>
+        </header>
+        <section class="game-card" aria-labelledby="guess-game-title">
+          <div class="game-card-heading">
+            <span class="game-cartridge" aria-hidden="true">01</span>
+            <div>
+              <p class="game-category">JOGO DE ADIVINHAÇÃO</p>
+              <h2 id="guess-game-title">Adivinhe o Número</h2>
+            </div>
+          </div>
+          <p class="game-instructions">Estou pensando em um número de 1 a 100. Qual é o seu palpite?</p>
+          <form id="guess-form" class="guess-form" novalidate>
+            <label for="guess-input">Seu palpite</label>
+            <div class="guess-controls">
+              <input id="guess-input" name="guess" type="number" min="1" max="100" step="1" inputmode="numeric" autocomplete="off">
+              <button class="classic-button" id="guess-submit" type="submit">Tentar</button>
+            </div>
+          </form>
+          <p class="game-feedback" id="game-feedback" role="status" aria-live="polite">Digite um número inteiro entre 1 e 100.</p>
+          <div class="game-footer">
+            <p>Tentativas: <strong id="guess-count">0</strong></p>
+            <button class="classic-button" id="guess-restart" type="button">Reiniciar</button>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <footer class="taskbar" aria-label="Barra de tarefas">
+      <button class="start-button" type="button" aria-label="Iniciar">
+        <span class="start-mark" aria-hidden="true">P</span>
+        <span>Iniciar</span>
+      </button>
+      <div class="taskbar-divider" aria-hidden="true"></div>
+      <div class="taskbar-apps" id="taskbar-apps" aria-label="Aplicativos abertos"></div>
+      <div class="taskbar-status">
+        <span class="status-indicator" aria-hidden="true"></span>
+        <time class="clock" id="clock" aria-label="Hora atual"></time>
+      </div>
+    </footer>
+  </main>
+</body>
+</html>
