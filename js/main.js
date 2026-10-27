@@ -19,12 +19,8 @@ const aboutClose = document.querySelector("#about-close");
 const aboutOk = document.querySelector("#about-ok");
 const minimizeButton = computerWindow?.querySelector(".minimize-control");
 const closeButton = computerWindow?.querySelector(".close-control");
-const notepadEditor = document.querySelector("#notepad-editor");
-const notepadStatus = document.querySelector("#notepad-save-status");
-const notepadNewButton = document.querySelector("#notepad-new");
-const notepadClearButton = document.querySelector("#notepad-clear");
-const notepadMinimizeButton = document.querySelector("#notepad-minimize");
-const notepadCloseButton = document.querySelector("#notepad-close");
+const notepadTemplate = notepadWindow?.cloneNode(true);
+const virtualFiles = window.PixelOSVirtualFiles;
 const settingsMinimizeButton = document.querySelector("#settings-minimize");
 const settingsCloseButton = document.querySelector("#settings-close");
 const settingsSaveStatus = document.querySelector("#settings-save-status");
@@ -36,6 +32,16 @@ const filePreview = document.querySelector("#file-preview");
 const filePreviewTitle = document.querySelector("#file-preview-title");
 const filePreviewContent = document.querySelector("#file-preview-content");
 const filePreviewClose = document.querySelector("#file-preview-close");
+const filePreviewOpen = document.querySelector("#file-preview-open");
+const filePreviewRename = document.querySelector("#file-preview-rename");
+const filePreviewMove = document.querySelector("#file-preview-move");
+const virtualDialog = document.querySelector("#virtual-dialog");
+const virtualDialogTitle = document.querySelector("#virtual-dialog-title");
+const virtualDialogForm = document.querySelector("#virtual-dialog-form");
+const virtualDialogLabel = document.querySelector("#virtual-dialog-label");
+const virtualDialogInput = document.querySelector("#virtual-dialog-input");
+const virtualDialogSelect = document.querySelector("#virtual-dialog-select");
+const virtualDialogCancel = document.querySelector("#virtual-dialog-cancel");
 const filesMinimizeButton = document.querySelector("#files-minimize");
 const filesCloseButton = document.querySelector("#files-close");
 const gamesMinimizeButton = document.querySelector("#games-minimize");
@@ -49,8 +55,6 @@ const guessRestart = document.querySelector("#guess-restart");
 
 let computerTaskbarButton = null;
 let computerIsMinimized = false;
-let notepadTaskbarButton = null;
-let notepadIsMinimized = false;
 let settingsTaskbarButton = null;
 let settingsIsMinimized = false;
 let filesTaskbarButton = null;
@@ -61,10 +65,10 @@ let secretNumber = 0;
 let guessAttempts = 0;
 let gameIsWon = false;
 const filesPathStack = [];
-let notepadSaveTimer = 0;
-
-const notepadStorageKey = "pixelos98.notepad.text";
-const notepadSaveDelay = 500;
+const notepadInstances = new Set();
+let notepadWindowCounter = 0;
+let filePreviewDocumentId = null;
+let resolveVirtualDialog = null;
 const wallpaperStorageKey = "pixelos98.wallpaper";
 const defaultWallpaper = "teal";
 const availableWallpapers = new Set(["teal", "purple", "blue"]);
@@ -196,139 +200,344 @@ function closeComputer() {
   setAboutVisible(false);
 }
 
-function setNotepadStatus(message, state = "saved") {
-  if (!notepadStatus) {
-    return;
-  }
-
-  notepadStatus.textContent = message;
-  notepadStatus.dataset.state = state;
+function setNotepadStatus(instance, message, state = "saved") {
+  instance.status.textContent = message;
+  instance.status.dataset.state = state;
 }
 
-function saveNotepad() {
-  if (!notepadEditor) {
+function finishVirtualDialog(value) {
+  if (!resolveVirtualDialog) {
     return;
   }
-
-  window.clearTimeout(notepadSaveTimer);
-  notepadSaveTimer = 0;
-
-  try {
-    window.localStorage.setItem(notepadStorageKey, notepadEditor.value);
-    setNotepadStatus("Salvo neste dispositivo");
-  } catch (error) {
-    console.error("Não foi possível salvar o Bloco de Notas.", error);
-    setNotepadStatus("Não foi possível salvar localmente", "error");
-  }
+  const resolve = resolveVirtualDialog;
+  resolveVirtualDialog = null;
+  virtualDialog.hidden = true;
+  resolve(value);
 }
 
-function scheduleNotepadSave() {
-  if (!notepadEditor) {
-    return;
+function requestVirtualDialog({ title, label, value = "", choices = null }) {
+  if (!virtualDialog || !virtualDialogForm) {
+    return Promise.resolve(null);
   }
-
-  window.clearTimeout(notepadSaveTimer);
-  setNotepadStatus("Salvando...", "pending");
-  notepadSaveTimer = window.setTimeout(saveNotepad, notepadSaveDelay);
+  virtualDialogTitle.textContent = title;
+  virtualDialogLabel.textContent = label;
+  virtualDialogLabel.htmlFor = choices ? "virtual-dialog-select" : "virtual-dialog-input";
+  virtualDialogInput.hidden = Boolean(choices);
+  virtualDialogInput.required = !choices;
+  virtualDialogSelect.hidden = !choices;
+  virtualDialogSelect.required = Boolean(choices);
+  virtualDialogSelect.replaceChildren();
+  if (choices) {
+    choices.forEach((choice) => {
+      const option = document.createElement("option");
+      option.value = choice.value;
+      option.textContent = choice.label;
+      virtualDialogSelect.append(option);
+    });
+    virtualDialogSelect.value = value || choices[0]?.value || "";
+  } else {
+    virtualDialogInput.value = value;
+  }
+  virtualDialog.hidden = false;
+  return new Promise((resolve) => {
+    resolveVirtualDialog = resolve;
+    (choices ? virtualDialogSelect : virtualDialogInput).focus();
+  });
 }
 
-function loadNotepad() {
-  if (!notepadEditor) {
+function refreshNotepadTitle(instance) {
+  const documentName = instance.documentId ? virtualFiles.getDocument(instance.documentId)?.name : null;
+  const dirty = instance.editor.value !== instance.savedContent;
+  instance.title.textContent = `${documentName || "Bloco de Notas"}${dirty ? " *" : ""}`;
+  setNotepadStatus(instance, dirty ? "Alterações não salvas" : (documentName ? "Salvo neste dispositivo" : "Documento novo"), dirty ? "pending" : "saved");
+}
+
+function confirmDiscardChanges(instance) {
+  if (instance.editor.value === instance.savedContent) {
+    return true;
+  }
+  return window.confirm("Há alterações não salvas. Deseja descartá-las?");
+}
+
+function activateNotepad(instance) {
+  instance.window.hidden = false;
+  instance.window.setAttribute("aria-hidden", "false");
+  instance.isMinimized = false;
+  instance.taskbarButton.setAttribute("aria-pressed", "true");
+  instance.window.style.zIndex = String(10 + notepadInstances.size);
+}
+
+function closeNotepad(instance) {
+  if (!confirmDiscardChanges(instance)) {
     return;
   }
+  instance.window.remove();
+  instance.taskbarButton.remove();
+  notepadInstances.delete(instance);
+}
 
-  try {
-    const savedText = window.localStorage.getItem(notepadStorageKey);
-    if (savedText !== null) {
-      notepadEditor.value = savedText;
-      setNotepadStatus("Texto recuperado");
+function minimizeNotepad(instance) {
+  instance.window.hidden = true;
+  instance.window.setAttribute("aria-hidden", "true");
+  instance.isMinimized = true;
+  instance.taskbarButton.setAttribute("aria-pressed", "false");
+}
+
+function updateNotepadFromDocument(instance, savedDocument) {
+  instance.documentId = savedDocument.id;
+  instance.savedContent = savedDocument.content;
+  instance.editor.value = savedDocument.content;
+  instance.title.textContent = savedDocument.name;
+  setNotepadStatus(instance, "Documento aberto");
+  instance.editor.focus();
+}
+
+async function getDestinationFolder() {
+  const folders = virtualFiles.listFolders();
+  const selectedFolderId = await requestVirtualDialog({
+    title: "Escolher pasta",
+    label: "Pasta de destino",
+    value: virtualFiles.documentsFolderId,
+    choices: folders.map((folder) => ({ value: folder.id, label: folder.name })),
+  });
+  if (selectedFolderId === null) {
+    return null;
+  }
+  return virtualFiles.getFolder(selectedFolderId);
+}
+
+async function saveNotepad(instance, saveAs = false) {
+  const current = instance.documentId ? virtualFiles.getDocument(instance.documentId) : null;
+  const needsSaveAs = saveAs || !current;
+  let name = current?.name;
+  let folderId = current?.folderId;
+
+  if (needsSaveAs) {
+    name = await requestVirtualDialog({
+      title: "Salvar documento",
+      label: "Nome do documento",
+      value: current?.name || "Sem título.txt",
+    });
+    if (name === null) {
+      return;
     }
-  } catch (error) {
-    console.error("Não foi possível recuperar o Bloco de Notas.", error);
-    setNotepadStatus("Não foi possível ler o salvamento local", "error");
+    name = name.trim();
+    if (!name) {
+      setNotepadStatus(instance, "Digite um nome para o documento", "error");
+      return;
+    }
+    const folder = await getDestinationFolder();
+    if (!folder) {
+      return;
+    }
+    folderId = folder.id;
   }
+
+  try {
+    const savedDocument = needsSaveAs
+      ? virtualFiles.createDocument({ name, content: instance.editor.value, folderId })
+      : virtualFiles.updateDocument(current.id, { content: instance.editor.value });
+    instance.documentId = savedDocument.id;
+    instance.savedContent = savedDocument.content;
+    instance.title.textContent = savedDocument.name;
+    setNotepadStatus(instance, needsSaveAs ? "Cópia salva neste dispositivo" : "Salvo neste dispositivo");
+  } catch (error) {
+    console.error("Não foi possível salvar o documento.", error);
+    setNotepadStatus(instance, "Não foi possível salvar; verifique o armazenamento", "error");
+  }
+}
+
+async function chooseDocumentToOpen(instance) {
+  const documents = virtualFiles.listDocuments();
+  if (documents.length === 0) {
+    setNotepadStatus(instance, "Não há documentos salvos para abrir", "error");
+    return;
+  }
+  const selectedId = await requestVirtualDialog({
+    title: "Abrir documento",
+    label: "Documento salvo",
+    value: documents[0].id,
+    choices: documents.map((savedDocument) => {
+    const folder = virtualFiles.getFolder(savedDocument.folderId);
+      return { value: savedDocument.id, label: `${savedDocument.name} (${folder?.name || "Pasta desconhecida"})` };
+    }),
+  });
+  if (selectedId === null) {
+    return;
+  }
+  if (confirmDiscardChanges(instance)) {
+    const selectedDocument = virtualFiles.getDocument(selectedId);
+    if (selectedDocument) {
+      updateNotepadFromDocument(instance, selectedDocument);
+    }
+  }
+}
+
+async function exportNotepad(instance) {
+  let filename = instance.documentId ? virtualFiles.getDocument(instance.documentId)?.name : null;
+  if (!filename) {
+    filename = await requestVirtualDialog({
+      title: "Exportar arquivo",
+      label: "Nome do arquivo .txt",
+      value: "Sem título.txt",
+    });
+  }
+  if (filename === null || filename === "") {
+    return;
+  }
+  filename = filename.trim();
+  if (!filename) {
+    setNotepadStatus(instance, "Digite um nome para o arquivo", "error");
+    return;
+  }
+  if (!filename.toLocaleLowerCase().endsWith(".txt")) {
+    filename += ".txt";
+  }
+
+  try {
+    const blob = new Blob([instance.editor.value], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename.replace(/[\\/:*?"<>|]/g, "_");
+    document.body.append(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    setNotepadStatus(instance, "Arquivo .txt exportado");
+  } catch (error) {
+    console.error("Não foi possível exportar o documento.", error);
+    setNotepadStatus(instance, "Não foi possível exportar o arquivo .txt", "error");
+  }
+}
+
+function createNotepadInstance(openDocument = null) {
+  if (!notepadTemplate || !taskbarApps) {
+    return null;
+  }
+  notepadWindowCounter += 1;
+  const notepad = notepadWindowCounter === 1
+    ? notepadWindow
+    : notepadTemplate.cloneNode(true);
+  if (notepadWindowCounter > 1) {
+    const idMap = new Map();
+    notepad.id = `notepad-window-${notepadWindowCounter}`;
+    notepad.querySelectorAll("[id]").forEach((element) => {
+      const oldId = element.id;
+      const newId = `${oldId}-${notepadWindowCounter}`;
+      idMap.set(oldId, newId);
+      element.id = newId;
+    });
+    notepad.querySelectorAll("[for], [aria-labelledby]").forEach((element) => {
+      ["for", "aria-labelledby"].forEach((attribute) => {
+        const value = element.getAttribute(attribute);
+        if (value && idMap.has(value)) {
+          element.setAttribute(attribute, idMap.get(value));
+        }
+      });
+    });
+    desktop.append(notepad);
+  }
+
+  const instance = {
+    window: notepad,
+    editor: notepad.querySelector(".notepad-editor"),
+    status: notepad.querySelector(".notepad-save-status"),
+    title: notepad.querySelector(".window-titlebar > span:nth-child(2)"),
+    documentId: null,
+    savedContent: "",
+    isMinimized: false,
+    taskbarButton: document.createElement("button"),
+  };
+  instance.taskbarButton.className = "taskbar-app-button";
+  instance.taskbarButton.type = "button";
+  instance.taskbarButton.textContent = "Bloco de Notas";
+  instance.taskbarButton.setAttribute("aria-label", "Alternar Bloco de Notas");
+  instance.taskbarButton.addEventListener("click", () => {
+    if (instance.isMinimized) {
+      activateNotepad(instance);
+    } else {
+      minimizeNotepad(instance);
+    }
+  });
+  taskbarApps.append(instance.taskbarButton);
+  notepadInstances.add(instance);
+
+  notepad.querySelector(".minimize-control").addEventListener("click", () => minimizeNotepad(instance));
+  notepad.querySelector(".close-control").addEventListener("click", () => closeNotepad(instance));
+  notepad.querySelector("#notepad-new, [id^='notepad-new-']").addEventListener("click", () => {
+    if (confirmDiscardChanges(instance)) {
+      instance.editor.value = "";
+      instance.documentId = null;
+      instance.savedContent = "";
+      refreshNotepadTitle(instance);
+      instance.editor.focus();
+    }
+  });
+  notepad.querySelector("#notepad-open, [id^='notepad-open-']").addEventListener("click", () => {
+    if (confirmDiscardChanges(instance)) {
+      chooseDocumentToOpen(instance);
+    }
+  });
+  notepad.querySelector("#notepad-save, [id^='notepad-save-']").addEventListener("click", () => saveNotepad(instance));
+  notepad.querySelector("#notepad-save-as, [id^='notepad-save-as-']").addEventListener("click", () => saveNotepad(instance, true));
+  notepad.querySelector("#notepad-export, [id^='notepad-export-']").addEventListener("click", () => exportNotepad(instance));
+  notepad.querySelector("#notepad-clear, [id^='notepad-clear-']").addEventListener("click", () => {
+    if (confirmDiscardChanges(instance)) {
+      instance.editor.value = "";
+      instance.documentId = null;
+      instance.savedContent = "";
+      refreshNotepadTitle(instance);
+    }
+  });
+  instance.editor.addEventListener("input", () => refreshNotepadTitle(instance));
+  instance.editor.addEventListener("keydown", (event) => {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+      event.preventDefault();
+      saveNotepad(instance);
+    }
+  });
+  if (openDocument) {
+    updateNotepadFromDocument(instance, openDocument);
+  } else if (virtualFiles.storageWarning) {
+    setNotepadStatus(instance, virtualFiles.storageWarning, "error");
+  } else {
+    refreshNotepadTitle(instance);
+  }
+  activateNotepad(instance);
+  return instance;
 }
 
 function openNotepad() {
-  if (!notepadWindow || !taskbarApps) {
-    return;
+  const existing = Array.from(notepadInstances).pop();
+  if (existing) {
+    activateNotepad(existing);
+  } else {
+    createNotepadInstance();
   }
-
-  if (!notepadTaskbarButton) {
-    notepadTaskbarButton = document.createElement("button");
-    notepadTaskbarButton.className = "taskbar-app-button";
-    notepadTaskbarButton.type = "button";
-    notepadTaskbarButton.textContent = "Bloco de Notas";
-    notepadTaskbarButton.setAttribute("aria-label", "Alternar Bloco de Notas");
-    notepadTaskbarButton.addEventListener("click", toggleNotepadWindow);
-    taskbarApps.append(notepadTaskbarButton);
-  }
-
-  notepadWindow.hidden = false;
-  notepadWindow.setAttribute("aria-hidden", "false");
-  notepadIsMinimized = false;
-  notepadTaskbarButton.setAttribute("aria-pressed", "true");
 }
 
-function minimizeNotepad() {
-  if (!notepadWindow || !notepadTaskbarButton) {
-    return;
+function openDocumentInNotepad(documentId) {
+  const savedDocument = virtualFiles.getDocument(documentId);
+  if (savedDocument) {
+    createNotepadInstance(savedDocument);
   }
-
-  notepadWindow.hidden = true;
-  notepadWindow.setAttribute("aria-hidden", "true");
-  notepadIsMinimized = true;
-  notepadTaskbarButton.setAttribute("aria-pressed", "false");
 }
 
-function toggleNotepadWindow() {
-  if (notepadWindow?.hidden && notepadIsMinimized) {
-    openNotepad();
-    return;
+function migrateLegacyNotepad() {
+  try {
+    const oldText = window.localStorage.getItem("pixelos98.notepad.text");
+    if (oldText !== null && virtualFiles.listDocuments().length === 0) {
+      virtualFiles.createDocument({
+        name: "Documento recuperado.txt",
+        content: oldText,
+        folderId: virtualFiles.documentsFolderId,
+      });
+      window.localStorage.removeItem("pixelos98.notepad.text");
+    }
+  } catch (error) {
+    console.error("Não foi possível migrar o texto antigo do Bloco de Notas.", error);
   }
-
-  if (notepadWindow && !notepadWindow.hidden) {
-    minimizeNotepad();
-    return;
-  }
-
-  openNotepad();
-}
-
-function closeNotepad() {
-  if (!notepadWindow) {
-    return;
-  }
-
-  saveNotepad();
-  notepadWindow.hidden = true;
-  notepadWindow.setAttribute("aria-hidden", "true");
-  notepadIsMinimized = false;
-  notepadTaskbarButton?.remove();
-  notepadTaskbarButton = null;
-}
-
-function clearNotepadAfterConfirmation() {
-  if (!notepadEditor || !window.confirm("Deseja apagar o texto do Bloco de Notas?")) {
-    return;
-  }
-
-  notepadEditor.value = "";
-  saveNotepad();
-}
-
-function createNewNotepadDocument() {
-  if (!notepadEditor) {
-    return;
-  }
-
-  if (notepadEditor.value.length > 0 && !window.confirm("O texto atual será apagado. Deseja criar um novo documento?")) {
-    return;
-  }
-
-  notepadEditor.value = "";
-  saveNotepad();
-  notepadEditor.focus();
 }
 
 function setWallpaper(wallpaper) {
@@ -442,15 +651,35 @@ function closeSettings() {
 }
 
 function getCurrentFolder() {
-  return filesPathStack.length > 0
-    ? filesPathStack[filesPathStack.length - 1].folder
-    : simulatedFileSystem;
+  const current = filesPathStack[filesPathStack.length - 1];
+  if (current?.virtualFolderId) {
+    const folder = virtualFiles.getFolder(current.virtualFolderId);
+    if (!folder) {
+      return { name: current.name, type: "folder", children: [] };
+    }
+    const folders = virtualFiles.listFolders()
+      .filter((item) => item.parentId === folder.id)
+      .map((item) => ({ name: item.name, type: "folder", children: [], virtualFolderId: item.id }));
+    const documents = virtualFiles.listDocuments(folder.id)
+      .map((item) => ({ name: item.name, type: "virtual-document", content: item.content, documentId: item.id }));
+    return { name: folder.name, type: "folder", children: [...folders, ...documents] };
+  }
+  if (current) {
+    return current.folder;
+  }
+  const virtualFolderEntry = virtualFiles.listFolders()
+    .filter((folder) => folder.parentId === virtualFiles.rootFolderId)
+    .map((folder) => ({ name: folder.name, type: "folder", children: [], virtualFolderId: folder.id }));
+  const rootDocuments = virtualFiles.listDocuments(virtualFiles.rootFolderId)
+    .map((item) => ({ name: item.name, type: "virtual-document", content: item.content, documentId: item.id }));
+  return { ...simulatedFileSystem, children: [...simulatedFileSystem.children, ...virtualFolderEntry, ...rootDocuments] };
 }
 
 function closeFilePreview() {
   if (filePreview) {
     filePreview.hidden = true;
   }
+  filePreviewDocumentId = null;
 }
 
 function showFilePreview(file) {
@@ -460,12 +689,22 @@ function showFilePreview(file) {
 
   filePreviewTitle.textContent = file.name;
   filePreviewContent.textContent = file.content;
+  filePreviewDocumentId = file.type === "virtual-document" ? file.documentId : null;
+  [filePreviewOpen, filePreviewRename, filePreviewMove].forEach((button) => {
+    if (button) {
+      button.hidden = filePreviewDocumentId === null;
+    }
+  });
   filePreview.hidden = false;
 }
 
 function openFileEntry(entry) {
+  if (entry.type === "virtual-document") {
+    showFilePreview(entry);
+    return;
+  }
   if (entry.type === "folder") {
-    filesPathStack.push({ name: entry.name, folder: entry });
+    filesPathStack.push({ name: entry.name, folder: entry, virtualFolderId: entry.virtualFolderId || null });
     renderFilesFolder();
     return;
   }
@@ -505,8 +744,55 @@ function renderFilesFolder() {
     name.textContent = entry.name;
     entryButton.append(icon, name);
     entryButton.addEventListener("click", () => openFileEntry(entry));
+    if (entry.type === "virtual-document") {
+      entryButton.addEventListener("dblclick", () => openDocumentInNotepad(entry.documentId));
+    }
     filesList.append(entryButton);
   });
+}
+
+function openPreviewedDocument() {
+  if (filePreviewDocumentId) {
+    openDocumentInNotepad(filePreviewDocumentId);
+  }
+}
+
+async function renamePreviewedDocument() {
+  const savedDocument = filePreviewDocumentId ? virtualFiles.getDocument(filePreviewDocumentId) : null;
+  if (!savedDocument) {
+    return;
+  }
+  const name = await requestVirtualDialog({
+    title: "Renomear documento",
+    label: "Novo nome",
+    value: savedDocument.name,
+  });
+  if (name === null || !name.trim()) {
+    return;
+  }
+  try {
+    virtualFiles.updateDocument(savedDocument.id, { name: name.trim() });
+  } catch (error) {
+    console.error("Não foi possível renomear o documento.", error);
+    filePreviewTitle.textContent = `Erro ao renomear: ${error.message}`;
+  }
+}
+
+async function movePreviewedDocument() {
+  const savedDocument = filePreviewDocumentId ? virtualFiles.getDocument(filePreviewDocumentId) : null;
+  if (!savedDocument) {
+    return;
+  }
+  const folder = await getDestinationFolder();
+  if (!folder) {
+    return;
+  }
+  try {
+    virtualFiles.updateDocument(savedDocument.id, { folderId: folder.id });
+  } catch (error) {
+    console.error("Não foi possível mover o documento.", error);
+    filePreviewTitle.textContent = `Erro ao mover: ${error.message}`;
+  }
 }
 
 function openFiles() {
@@ -702,7 +988,7 @@ function closeGames() {
   gamesTaskbarButton = null;
 }
 
-loadNotepad();
+migrateLegacyNotepad();
 loadWallpaper();
 restartGuessGame();
 
@@ -711,8 +997,6 @@ minimizeButton?.addEventListener("click", minimizeComputer);
 closeButton?.addEventListener("click", closeComputer);
 notepadIcon?.addEventListener("click", openNotepad);
 settingsIcon?.addEventListener("click", openSettings);
-notepadMinimizeButton?.addEventListener("click", minimizeNotepad);
-notepadCloseButton?.addEventListener("click", closeNotepad);
 settingsMinimizeButton?.addEventListener("click", minimizeSettings);
 settingsCloseButton?.addEventListener("click", closeSettings);
 filesIcon?.addEventListener("click", openFiles);
@@ -720,22 +1004,45 @@ filesMinimizeButton?.addEventListener("click", minimizeFiles);
 filesCloseButton?.addEventListener("click", closeFiles);
 filesBackButton?.addEventListener("click", goBackInFiles);
 filePreviewClose?.addEventListener("click", closeFilePreview);
+filePreviewOpen?.addEventListener("click", openPreviewedDocument);
+filePreviewRename?.addEventListener("click", renamePreviewedDocument);
+filePreviewMove?.addEventListener("click", movePreviewedDocument);
+virtualDialogForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  finishVirtualDialog(virtualDialogSelect.hidden ? virtualDialogInput.value : virtualDialogSelect.value);
+});
+virtualDialogCancel?.addEventListener("click", () => finishVirtualDialog(null));
+virtualDialog?.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    finishVirtualDialog(null);
+  }
+});
 gamesIcon?.addEventListener("click", openGames);
 gamesMinimizeButton?.addEventListener("click", minimizeGames);
 gamesCloseButton?.addEventListener("click", closeGames);
 guessForm?.addEventListener("submit", submitGuess);
 guessRestart?.addEventListener("click", restartGuessGame);
-notepadEditor?.addEventListener("input", scheduleNotepadSave);
-notepadNewButton?.addEventListener("click", createNewNotepadDocument);
-notepadClearButton?.addEventListener("click", clearNotepadAfterConfirmation);
 wallpaperOptions.forEach((option) => {
   option.addEventListener("click", () => selectWallpaper(option.dataset.wallpaperOption));
 });
 
-window.addEventListener("pagehide", () => {
-  if (notepadSaveTimer) {
-    saveNotepad();
+virtualFiles.subscribe(() => {
+  if (filesWindow && !filesWindow.hidden) {
+    renderFilesFolder();
   }
+  notepadInstances.forEach((instance) => {
+    if (instance.documentId && instance.editor.value === instance.savedContent) {
+      const updated = virtualFiles.getDocument(instance.documentId);
+      if (updated) {
+        instance.savedContent = updated.content;
+        instance.editor.value = updated.content;
+        instance.title.textContent = updated.name;
+        setNotepadStatus(instance, "Documento atualizado");
+      }
+    } else if (instance.documentId) {
+      refreshNotepadTitle(instance);
+    }
+  });
 });
 
 aboutButton?.addEventListener("click", () => {

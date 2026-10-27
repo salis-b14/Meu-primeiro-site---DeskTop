@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#087e78">
   <title>PixelOS 98</title>
   <link rel="stylesheet" href="css/style.css">
+  <script src="js/virtual-files.js" defer></script>
   <script src="js/main.js" defer></script>
 </head>
 <body>
@@ -129,6 +130,10 @@
       <div class="notepad-content">
         <div class="notepad-toolbar" aria-label="Ações do editor">
           <button class="classic-button" id="notepad-new" type="button">Novo</button>
+          <button class="classic-button" id="notepad-open" type="button">Abrir</button>
+          <button class="classic-button" id="notepad-save" type="button">Salvar</button>
+          <button class="classic-button" id="notepad-save-as" type="button">Salvar como</button>
+          <button class="classic-button" id="notepad-export" type="button">Exportar .txt</button>
           <button class="classic-button" id="notepad-clear" type="button">Limpar</button>
         </div>
         <label class="visually-hidden" for="notepad-editor">Texto do Bloco de Notas</label>
@@ -181,12 +186,17 @@
           <button class="classic-button" id="files-back" type="button" disabled>Voltar</button>
           <p class="files-path" id="files-path" aria-live="polite">Meu Computador</p>
         </div>
-        <p class="files-notice">Arquivos e pastas fictícios da simulação. Nada aqui acessa os arquivos reais do computador.</p>
+        <p class="files-notice">Os exemplos são fictícios; documentos criados ficam salvos neste dispositivo.</p>
         <div class="files-list" id="files-list" aria-label="Conteúdo da pasta atual"></div>
         <section class="file-preview" id="file-preview" aria-labelledby="file-preview-title" hidden>
           <div class="file-preview-heading">
             <h2 id="file-preview-title"></h2>
-            <button class="classic-button" id="file-preview-close" type="button">Fechar</button>
+            <div class="file-preview-actions">
+              <button class="classic-button" id="file-preview-open" type="button" hidden>Abrir no Bloco de Notas</button>
+              <button class="classic-button" id="file-preview-rename" type="button" hidden>Renomear</button>
+              <button class="classic-button" id="file-preview-move" type="button" hidden>Mover</button>
+              <button class="classic-button" id="file-preview-close" type="button">Fechar</button>
+            </div>
           </div>
           <pre id="file-preview-content"></pre>
         </section>
@@ -232,6 +242,21 @@
             <button class="classic-button" id="guess-restart" type="button">Reiniciar</button>
           </div>
         </section>
+      </div>
+    </section>
+
+    <section class="virtual-dialog" id="virtual-dialog" hidden>
+      <div class="virtual-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="virtual-dialog-title">
+        <h2 id="virtual-dialog-title"></h2>
+        <form id="virtual-dialog-form">
+          <label id="virtual-dialog-label" for="virtual-dialog-input"></label>
+          <input id="virtual-dialog-input" type="text" autocomplete="off">
+          <select id="virtual-dialog-select" hidden></select>
+          <div class="virtual-dialog-actions">
+            <button class="classic-button" type="submit">Continuar</button>
+            <button class="classic-button" id="virtual-dialog-cancel" type="button">Cancelar</button>
+          </div>
+        </form>
       </div>
     </section>
 

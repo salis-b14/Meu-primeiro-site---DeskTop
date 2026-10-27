@@ -208,8 +208,68 @@ button {
 }
 
 .app-window[hidden],
-.about-panel[hidden] {
+.about-panel[hidden],
+.virtual-dialog[hidden] {
   display: none;
+}
+
+.virtual-dialog {
+  position: absolute;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  padding: 16px;
+  place-items: center;
+  background: rgb(18 22 43 / 48%);
+}
+
+.virtual-dialog-panel {
+  width: min(360px, 100%);
+  padding: 14px;
+  border: 2px solid;
+  border-color: var(--highlight) #555 #555 var(--highlight);
+  background: var(--taskbar);
+  box-shadow: 3px 3px 0 rgb(22 24 45 / 45%);
+}
+
+.virtual-dialog-panel h2 {
+  margin: 0 0 12px;
+  color: #293d94;
+  font-size: 21px;
+}
+
+.virtual-dialog-panel form {
+  display: grid;
+  gap: 8px;
+}
+
+.virtual-dialog-panel label {
+  font-size: 16px;
+}
+
+.virtual-dialog-panel input,
+.virtual-dialog-panel select {
+  width: 100%;
+  min-height: 34px;
+  padding: 5px 7px;
+  border: 2px solid;
+  border-color: #555 var(--highlight) var(--highlight) #555;
+  border-radius: 0;
+  background: #fffef4;
+  color: var(--ink);
+  font: inherit;
+}
+
+.virtual-dialog-panel input[hidden],
+.virtual-dialog-panel select[hidden] {
+  display: none;
+}
+
+.virtual-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+  margin-top: 5px;
 }
 
 .app-window .window-titlebar {
@@ -404,11 +464,14 @@ button {
 
 .notepad-toolbar {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
 }
 
 .notepad-toolbar .classic-button {
   min-width: 68px;
+  padding-right: 6px;
+  padding-left: 6px;
 }
 
 .notepad-editor {
@@ -823,6 +886,13 @@ button {
   justify-content: space-between;
   gap: 8px;
   border-bottom: 1px solid #888;
+}
+
+.file-preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 5px;
 }
 
 .file-preview-heading h2 {
